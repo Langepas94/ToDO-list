@@ -6,9 +6,9 @@
 //
 
 import UIKit
-
+import CoreData
 class MainTableViewController: UITableViewController {
-    var tasks: [String] = []
+    var tasks: [Task] = []
     override func viewDidLoad() {
         super.viewDidLoad()
         let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(saveTask))
@@ -39,8 +39,8 @@ class MainTableViewController: UITableViewController {
    
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
-
-        cell.textLabel?.text = tasks[indexPath.row]
+        let task = tasks[indexPath.row]
+        cell.textLabel?.text = task.title
 
         return cell
     }
@@ -98,8 +98,9 @@ class MainTableViewController: UITableViewController {
         let alertController = UIAlertController(title: "Новая задача", message: "Добавьте новую задачу", preferredStyle: .alert)
         let saveAction = UIAlertAction(title: "Save", style: .default) { action in
             let tf = alertController.textFields?.first
-            if let newTask = tf?.text {
-                self.tasks.insert(newTask, at: 0)
+            if let newTaskTitle = tf?.text {
+                self.saveTask(withTitle: newTaskTitle)
+//                self.tasks.insert(newTask, at: 0)
                 self.tableView.reloadData()
             }
         }
@@ -111,6 +112,21 @@ class MainTableViewController: UITableViewController {
         alertController.addAction(cancelAction)
         
         present(alertController, animated: true, completion: nil)
+    }
+    
+    private func saveTask(withTitle title: String) {
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+        let context = appDelegate.persistentContainer.viewContext
+        
+        guard let entity = NSEntityDescription.entity(forEntityName: "Task", in: context) else {return}
+        let taskObject = Task(entity: entity, insertInto: context)
+        taskObject.title = title
+        
+        do {
+            try context.save()
+        } catch let error as NSError {
+            print(error.localizedDescription)
+        }
     }
     
 }
