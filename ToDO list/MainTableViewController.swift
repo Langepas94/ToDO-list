@@ -9,13 +9,48 @@ import UIKit
 import CoreData
 class MainTableViewController: UITableViewController {
     var tasks: [Task] = []
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        let context = getContext
+        let fetchRequest: NSFetchRequest<Task> = Task.fetchRequest()
+        let sortDescriptor = NSSortDescriptor(key: "title", ascending: true)
+        fetchRequest.sortDescriptors = [sortDescriptor]
+        
+        
+        do {
+            tasks = try context().fetch(fetchRequest)
+        } catch let error as NSError {
+            
+        }
+        
+    }
+    
+    private func getContext() -> NSManagedObjectContext {
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+        return appDelegate.persistentContainer.viewContext
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(saveTask))
+        let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(saveTaskk))
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
         navigationItem.title = "TODO"
         navigationItem.rightBarButtonItem = addButton
-        
+//        
+//        let context = getContext()
+//        let fetchRequest: NSFetchRequest<Task> = Task.fetchRequest()
+//        if let results = try? context.fetch(fetchRequest) {
+//            for result in results {
+//                context.delete(result)
+//            }
+//        }
+//        do {
+//            try context.save()
+//        } catch let error as NSError {
+//            print(error.localizedDescription)
+//        }
         
         // Uncomment the following line to preserve selection between presentations
         // self.clearsSelectionOnViewWillAppear = false
@@ -94,13 +129,13 @@ class MainTableViewController: UITableViewController {
         
     }
     
-    @objc func saveTask(_ sender: UIBarButtonItem) {
+    @objc func saveTaskk(_ sender: UIBarButtonItem) {
         let alertController = UIAlertController(title: "Новая задача", message: "Добавьте новую задачу", preferredStyle: .alert)
         let saveAction = UIAlertAction(title: "Save", style: .default) { action in
             let tf = alertController.textFields?.first
             if let newTaskTitle = tf?.text {
                 self.saveTask(withTitle: newTaskTitle)
-//                self.tasks.insert(newTask, at: 0)
+//                self.tasks.insert(newTaskTitle.row, at: 0)
                 self.tableView.reloadData()
             }
         }
@@ -115,8 +150,8 @@ class MainTableViewController: UITableViewController {
     }
     
     private func saveTask(withTitle title: String) {
-        let appDelegate = UIApplication.shared.delegate as! AppDelegate
-        let context = appDelegate.persistentContainer.viewContext
+        
+        let context = getContext()
         
         guard let entity = NSEntityDescription.entity(forEntityName: "Task", in: context) else {return}
         let taskObject = Task(entity: entity, insertInto: context)
@@ -124,6 +159,7 @@ class MainTableViewController: UITableViewController {
         
         do {
             try context.save()
+            tasks.append(taskObject)
         } catch let error as NSError {
             print(error.localizedDescription)
         }
